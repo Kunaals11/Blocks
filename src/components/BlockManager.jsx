@@ -10,7 +10,7 @@ function BlockManager() {
   ];
 
   const [blocks, setBlocks] = useState(initialBlocks);
-  const [deletedItems, setDeletedItems] = useState([]); // Stores both item and blockIndex
+  const [deletedItems, setDeletedItems] = useState([]); 
 
   const addBlock = () => {
     if (blocks.length < 7) {
