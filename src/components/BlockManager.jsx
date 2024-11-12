@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './BlockManager.css'
+import './BlockManager.css';
 
 function BlockManager() {
   const initialBlocks = [
@@ -10,7 +10,7 @@ function BlockManager() {
   ];
 
   const [blocks, setBlocks] = useState(initialBlocks);
-  const [deletedItems, setDeletedItems] = useState([]); 
+  const [deletedItems, setDeletedItems] = useState([]);
 
   const addBlock = () => {
     if (blocks.length < 7) {
@@ -50,19 +50,32 @@ function BlockManager() {
 
     if (newBlocks[blockIndex]) {
       newBlocks[blockIndex].items.push(item);
+    } else {
+      newBlocks[0].items.push(item);
     }
 
     setBlocks(newBlocks);
     setDeletedItems(deletedItems.filter(deleted => deleted !== itemToRestore));
   };
 
+  const deleteBlock = (blockIndex) => {
+    const newBlocks = [...blocks];
+    const blockToDelete = newBlocks.splice(blockIndex, 1)[0];
+    
+    const itemsToDelete = blockToDelete.items.map(item => ({ item, blockIndex }));
+    setDeletedItems([...deletedItems, ...itemsToDelete]);
+    
+    setBlocks(newBlocks);
+  };
+
   return (
     <div>
       {blocks.map((block, blockIndex) => (
-        <div key={block.id}>
+        <div key={block.id} className="block">
           <h3>Block {block.id}</h3>
+          <button onClick={() => deleteBlock(blockIndex)}>Delete Block</button>
           {block.items.map((item, itemIndex) => (
-            <div key={itemIndex}>
+            <div key={itemIndex} className="item">
               <span>{item}</span>
               {blockIndex > 0 && (
                 <button onClick={() => moveBackward(blockIndex, itemIndex)}>←</button>
@@ -78,7 +91,7 @@ function BlockManager() {
 
       {blocks.length < 7 && <button onClick={addBlock}>Add More</button>}
 
-      <div>
+      <div className="deleted-items">
         <h3>Deleted Items</h3>
         {deletedItems.map((deleted, index) => (
           <div key={index}>
@@ -91,4 +104,4 @@ function BlockManager() {
   );
 }
 
-export default BlockManager;
+export default BlockManager; 
