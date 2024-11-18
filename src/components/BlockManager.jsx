@@ -3,100 +3,134 @@ import './BlockManager.css';
 
 function BlockManager() {
   const initialBlocks = [
-    { id: 'A', items: ['Apple', 'Mango', 'Banana', 'Orange'] },
+    { id: 'A', items: ['Apple', 'Mango', 'Banana'] },
     { id: 'B', items: [] },
     { id: 'C', items: [] },
     { id: 'D', items: [] },
   ];
 
   const [blocks, setBlocks] = useState(initialBlocks);
-  const [deletedItems, setDeletedItems] = useState([]);
+  const [removedItems, setRemovedItems] = useState([]);
+  const [newItemName, setNewItemName] = useState('');
+  const [selectedBlock, setSelectedBlock] = useState('');
 
-  const addBlock = () => {
+  const addNewBlock = () => {
     if (blocks.length < 7) {
-      const newBlockId = String.fromCharCode(65 + blocks.length);
-      setBlocks([...blocks, { id: newBlockId, items: [] }]);
+      const newBlock = String.fromCharCode(65 + blocks.length);
+      setBlocks([...blocks, { id: newBlock, items: [] }]);
     }
   };
 
-  const moveForward = (blockIndex, itemIndex) => {
-    const newBlocks = [...blocks];
-    const item = newBlocks[blockIndex].items.splice(itemIndex, 1)[0];
-    if (blockIndex < newBlocks.length - 1) {
-      newBlocks[blockIndex + 1].items.push(item);
-      setBlocks(newBlocks);
+  const moveItemForward = (blockIndex, itemIndex) => {
+    const updatedBlocks = [...blocks];
+    const itemToMove = updatedBlocks[blockIndex].items.splice(itemIndex, 1)[0];
+    const nextBlockIndex = (blockIndex + 1) % updatedBlocks.length;
+
+    if (updatedBlocks[nextBlockIndex].items.length < 3) {
+      updatedBlocks[nextBlockIndex].items.push(itemToMove);
+      setBlocks(updatedBlocks);
+    } else {
+      updatedBlocks[blockIndex].items.splice(itemIndex, 0, itemToMove);
+      setBlocks(updatedBlocks);
     }
   };
 
-  const moveBackward = (blockIndex, itemIndex) => {
-    const newBlocks = [...blocks];
-    const item = newBlocks[blockIndex].items.splice(itemIndex, 1)[0];
-    if (blockIndex > 0) {
-      newBlocks[blockIndex - 1].items.push(item);
-      setBlocks(newBlocks);
+  const moveItemBackward = (blockIndex, itemIndex) => {
+    const updatedBlocks = [...blocks];
+    const itemToMove = updatedBlocks[blockIndex].items.splice(itemIndex, 1)[0];
+    const previousBlockIndex = (blockIndex - 1 + updatedBlocks.length) % updatedBlocks.length;
+
+    if (updatedBlocks[previousBlockIndex].items.length < 3) {
+      updatedBlocks[previousBlockIndex].items.push(itemToMove);
+      setBlocks(updatedBlocks);
+    } else {
+      updatedBlocks[blockIndex].items.splice(itemIndex, 0, itemToMove);
+      setBlocks(updatedBlocks);
     }
   };
 
-  const deleteItem = (blockIndex, itemIndex) => {
-    const newBlocks = [...blocks];
-    const [deletedItem] = newBlocks[blockIndex].items.splice(itemIndex, 1);
-    setDeletedItems([...deletedItems, { item: deletedItem, blockIndex }]);
-    setBlocks(newBlocks);
+  const removeItem = (blockIndex, itemIndex) => {
+    const updatedBlocks = [...blocks];
+    const [itemRemoved] = updatedBlocks[blockIndex].items.splice(itemIndex, 1);
+    setRemovedItems([...removedItems, { item: itemRemoved, blockIndex }]);
+    setBlocks(updatedBlocks);
   };
 
   const restoreItem = (itemToRestore) => {
-    const newBlocks = [...blocks];
+    const updatedBlocks = [...blocks];
     const { item, blockIndex } = itemToRestore;
 
-    if (newBlocks[blockIndex]) {
-      newBlocks[blockIndex].items.push(item);
-    } else {
-      newBlocks[0].items.push(item);
+    if ( updatedBlocks[blockIndex].items.length < 3) {
+      updatedBlocks[blockIndex].items.push(item);
+      setRemovedItems(removedItems.filter(removed => removed !== itemToRestore));
+      setBlocks(updatedBlocks);
     }
-
-    setBlocks(newBlocks);
-    setDeletedItems(deletedItems.filter(deleted => deleted !== itemToRestore));
   };
 
-  const deleteBlock = (blockIndex) => {
-    const newBlocks = [...blocks];
-    const blockToDelete = newBlocks.splice(blockIndex, 1)[0];
-    
-    const itemsToDelete = blockToDelete.items.map(item => ({ item, blockIndex }));
-    setDeletedItems([...deletedItems, ...itemsToDelete]);
-    
-    setBlocks(newBlocks);
+  const removeBlock = (blockIndex) => {
+    const updatedBlocks = [...blocks];
+    const blockToRemove = updatedBlocks.splice(blockIndex, 1)[0];
+
+    const itemsToRemove = blockToRemove.items.map(item => ({ item, blockIndex }));
+    setRemovedItems([...removedItems, ...itemsToRemove]);
+
+    setBlocks(updatedBlocks);
+  };
+
+  const addItemToBlock = () => {
+    const blockIndex = blocks.findIndex(block => block.id === selectedBlock.toUpperCase());
+    if (blockIndex !== -1 && newItemName && blocks[blockIndex].items.length < 3) {
+      const updatedBlocks = [...blocks];
+      updatedBlocks[blockIndex].items.push(newItemName);
+      setBlocks(updatedBlocks);
+      setNewItemName('');
+      setSelectedBlock('');
+    } else {
+      alert("Please enter a valid target block and item name, and make sure the block has space for new items.");
+    }
   };
 
   return (
     <div>
+      <div className="input-area">
+        <input
+          type="text"
+          placeholder="Item Name"
+          value={newItemName}
+          onChange={(e) => setNewItemName(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Target Block (A, B, ...)"
+          value={selectedBlock}
+          onChange={(e) => setSelectedBlock(e.target.value)}
+        />
+        <button onClick={addItemToBlock}>Add Item</button>
+      </div>
+
       {blocks.map((block, blockIndex) => (
         <div key={block.id} className="block">
           <h3>Block {block.id}</h3>
-          <button onClick={() => deleteBlock(blockIndex)}>Delete Block</button>
+          <button onClick={() => removeBlock(blockIndex)}>Delete Block</button>
           {block.items.map((item, itemIndex) => (
             <div key={itemIndex} className="item">
               <span>{item}</span>
-              {blockIndex > 0 && (
-                <button onClick={() => moveBackward(blockIndex, itemIndex)}>←</button>
-              )}
-              {blockIndex < blocks.length - 1 && (
-                <button onClick={() => moveForward(blockIndex, itemIndex)}>→</button>
-              )}
-              <button onClick={() => deleteItem(blockIndex, itemIndex)}>Delete</button>
+              <button onClick={() => moveItemBackward(blockIndex, itemIndex)}>←</button>
+              <button onClick={() => moveItemForward(blockIndex, itemIndex)}>→</button>
+              <button onClick={() => removeItem(blockIndex, itemIndex)}>Delete</button>
             </div>
           ))}
         </div>
       ))}
 
-      {blocks.length < 7 && <button onClick={addBlock}>Add More</button>}
+      {blocks.length < 7 && <button onClick={addNewBlock}>Add New Block</button>}
 
-      <div className="deleted-items">
-        <h3>Deleted Items</h3>
-        {deletedItems.map((deleted, index) => (
+      <div className="removed-items">
+        <h3>Removed Items</h3>
+        {removedItems.map((removed, index) => (
           <div key={index}>
-            <span>{deleted.item}</span>
-            <button onClick={() => restoreItem(deleted)}>Restore</button>
+            <span>{removed.item}</span>
+            <button onClick={() => restoreItem(removed)}>Restore</button>
           </div>
         ))}
       </div>
@@ -104,4 +138,4 @@ function BlockManager() {
   );
 }
 
-export default BlockManager; 
+export default BlockManager;
